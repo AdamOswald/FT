@@ -37,7 +37,6 @@ models = [
      Model("Spacecraft Interior", "Guizmus/Tardisfusion, rabidgremlin/sd-db-epic-space-machine", "Tardis Box style, EpicSpaceMachine"),
      Model("CLIP", "EleutherAI/clip-guided-diffusion", "CLIP"),
      Model("Face Swap", "felixrosberg/face-swap", "faceswap, faceswap with, faceswapped, faceswapped with, face on"),
-     Model("Lumine Genshin", "Fampai/lumine_genshin_impact", "Lumine_genshin, Lumine_Genshin, Lumine, Lumine Genshin, lumine"),
      Model("Ganyu Genshin", "sd-concepts-library/ganyu-genshin-impact", "Ganyu, Ganyu Woman, Ganyu Genshin"),
      Model("Genshin Waifu", "sd-concepts-library/ganyu-genshin-impact, crumb/genshin-stable-inversion, yuiqena/GenshinImpact, katakana/2D-Mix, Guizmus/AnimeChanStyle", "Female, female, Woman, woman, Girl, girl"),
      Model("Genshin", "crumb/genshin-stable-inversion, yuiqena/GenshinImpact, katakana/2D-Mix, Guizmus/AnimeChanStyle", ""),
