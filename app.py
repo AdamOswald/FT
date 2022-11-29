@@ -27,7 +27,7 @@ models = [
      Model("Classic Disney", "nitrosocke/classic-anim-diffusion", "classic disney style"),
      Model("Pony Diffusion", "AstraliteHeart/pony-diffusion", "pony style"),
      Model("Robo Diffusion", "nousr/robo-diffusion", "robo style"),
-     Model("Cyberpunk Anime", "DGSpitzer/Cyberpunk-Anime-Diffusion, flax/Cyberpunk-Anime-Diffusion", "cyberpunk style"),
+     Model("Cyberpunk Anime", "AdamOswald1/Cyberpunk-Anime-Diffusion", "cyberpunk style"),
      Model("Tron Legacy", "dallinmackay/Tron-Legacy-diffusion", "trnlgcy"),
      Model("Dark Souls", "Guizmus/DarkSoulsDiffusion", "dark souls style"),
      Model("Space Machine", "rabidgremlin/sd-db-epic-space-machine", "EpicSpaceMachine"),
