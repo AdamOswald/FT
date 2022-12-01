@@ -9,8 +9,6 @@ app_file: app.py
 pinned: true
 license: mit
 duplicated_from: anzorq/finetuned_diffusion
-datasets:
-- Guizmus/AnimeChanStyle
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
