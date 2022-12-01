@@ -39,7 +39,7 @@ models = [
      Model("Face Swap", "felixrosberg/face-swap", "faceswap, faceswap with, faceswapped, faceswapped with, face on"),
      Model("Genshin Waifu", "crumb/genshin-stable-inversion, yuiqena/GenshinImpact, katakana/2D-Mix, Guizmus/AnimeChanStyle", "Female, female, Woman, woman, Girl, girl"),
      Model("Genshin", "crumb/genshin-stable-inversion, yuiqena/GenshinImpact, katakana/2D-Mix, Guizmus/AnimeChanStyle", ""),
-     Model("Waifu", "hakurei/waifu-diffusion, flax/waifu-diffusion, technillogue/waifu-diffusion, Guizmus/AnimeChanStyle, katakana/2D-Mix", ""),
+     Model("Waifu", "hakurei/waifu-diffusion, technillogue/waifu-diffusion, Guizmus/AnimeChanStyle, katakana/2D-Mix", ""),
      Model("Pokémon", "lambdalabs/sd-pokemon-diffusers", ""),
      Model("Test", "AdamoOswald1/Idk", ""),
      Model("Anime", "Guizmus/AnimeChanStyle, katakana/2D-Mix", ""),
