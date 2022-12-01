@@ -11,7 +11,6 @@ license: mit
 duplicated_from: anzorq/finetuned_diffusion
 datasets:
 - Guizmus/AnimeChanStyle
-- lambdalabs/pokemon-blip-captions
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
