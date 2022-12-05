@@ -3,5 +3,7 @@ torch
 git+https://github.com/huggingface/diffusers.git
 #transformers
 git+https://github.com/huggingface/transformers
+scipy
 ftfy
 accelerate
+psutil
