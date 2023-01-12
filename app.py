@@ -6,9 +6,13 @@ import utils
 import datetime
 import time
 import psutil
+import random
+
 
 start_time = time.time()
 is_colab = utils.is_google_colab()
+state = None
+current_steps = 25
 
 class Model:
     def __init__(self, name, path="", prefix=""):
@@ -20,7 +24,9 @@ class Model:
 
 models = [
      Model("Arcane", "nitrosocke/Arcane-Diffusion", "arcane style"),
+     Model("Dreamlike Diffusion 1.0", "dreamlike-art/dreamlike-diffusion-1.0", "dreamlikeart "),
      Model("Archer", "nitrosocke/archer-diffusion", "archer style"),
+     Model("Anything V3", "Linaqruf/anything-v3.0", ""),
      Model("Elden Ring", "nitrosocke/elden-ring-diffusion", "elden ring style"),
      Model("Spider-Verse", "nitrosocke/spider-verse-diffusion", "spiderverse style"),
      Model("Modern Disney", "nitrosocke/modern-disney-diffusion", "modern disney style"),
@@ -31,10 +37,11 @@ models = [
      Model("Tron Legacy", "dallinmackay/Tron-Legacy-diffusion", "trnlgcy"),
      Model("Dark Souls", "Guizmus/DarkSoulsDiffusion", "dark souls style"),
      Model("Space Machine", "rabidgremlin/sd-db-epic-space-machine", "EpicSpaceMachine"),
-     Model("Spacecraft", "rabidgremlin/sd-db-epic-space-machine, Guizmus/Tardisfusion", "EpicSpaceMachine, Classic Tardis style, Modern Tardis style"),
-     Model("TARDIS", "Guizmus/Tardisfusion", "Classic Tardis style, Modern Tardis style"),
-     Model("TARDIS Interior", "Guizmus/Tardisfusion", "Tardis Box style"),
-     Model("Spacecraft Interior", "Guizmus/Tardisfusion, rabidgremlin/sd-db-epic-space-machine", "Tardis Box style, EpicSpaceMachine"),
+     Model("Spacecraft", "rabidgremlin/sd-db-epic-space-machine, Guizmus/Tardisfusion", "EpicSpaceMachine, Tardis Box style"),
+     Model("TARDIS", "Guizmus/Tardisfusion", "Tardis Box style"),
+     Model("Modern Era TARDIS Interior", "Guizmus/Tardisfusion", "Modern Tardis style"),
+     Model("Classic Era TARDIS Interior", "Guizmus/Tardisfusion", "Classic Tardis style"),
+     Model("Spacecraft Interior", "Guizmus/Tardisfusion, rabidgremlin/sd-db-epic-space-machine", "Classic Tardis style, Modern Tardis style, EpicSpaceMachine"),
      Model("CLIP", "EleutherAI/clip-guided-diffusion", "CLIP"),
      Model("Genshin Waifu", "crumb/genshin-stable-inversion, yuiqena/GenshinImpact, katakana/2D-Mix, Guizmus/AnimeChanStyle", "Female, female, Woman, woman, Girl, girl"),
      Model("Genshin", "crumb/genshin-stable-inversion, yuiqena/GenshinImpact, katakana/2D-Mix, Guizmus/AnimeChanStyle", ""),
@@ -46,10 +53,13 @@ models = [
      Model("Avatar", "riccardogiorato/avatar-diffusion", "avatartwow style "),
      Model("Poolsuite", "prompthero/poolsuite", "poolsuite style "),
      Model("Loving Vincent (Van Gogh)", "dallinmackay/Van-Gogh-diffusion", "lvngvncnt "),
+     Model("Wavyfusion", "wavymulder/wavyfusion", "wa-vy style "),
+     Model("Analog Diffusion", "wavymulder/Analog-Diffusion", "analog style "),
      Model("Redshift renderer (Cinema4D)", "nitrosocke/redshift-diffusion", "redshift style "),
      Model("Midjourney v4 style", "prompthero/midjourney-v4-diffusion", "mdjrny-v4 style "),
      Model("TrinArt v2", "naclbit/trinart_stable_diffusion_v2"),
      Model("Balloon Art", "Fictiverse/Stable_Diffusion_BalloonArt_Model", "BalloonArt "),
+     Model("Epic Diffusion", "johnslegers/epic-diffusion", ""),
   ]
 
 custom_model = None
@@ -78,12 +88,21 @@ else:
     
 if torch.cuda.is_available():
   pipe = pipe.to("cuda")
+  pipe.enable_xformers_memory_efficient_attention()
 
 device = "GPU 🔥" if torch.cuda.is_available() else "CPU 🥶"
 
 def error_str(error, title="Error"):
     return f"""#### {title}
             {error}"""  if error else ""
+
+def update_state(new_state):
+  global state
+  state = new_state
+
+def update_state_info(old_state):
+  if state and state != old_state:
+    return gr.update(value=state)
 
 def custom_model_changed(path):
   models[0].path = path
@@ -96,7 +115,16 @@ def on_model_change(model_name):
 
   return gr.update(visible = model_name == models[0].name), gr.update(placeholder=prefix)
 
+def on_steps_change(steps):
+  global current_steps
+  current_steps = steps
+
+def pipe_callback(step: int, timestep: int, latents: torch.FloatTensor):
+    update_state(f"{step}/{current_steps} steps")#\nTime left, sec: {timestep/100:.0f}")
+
 def inference(model_name, prompt, guidance, steps, n_images=1, width=512, height=512, seed=0, img=None, strength=0.5, neg_prompt=""):
+
+  update_state(" ")
 
   print(psutil.virtual_memory()) # print memory usage
 
@@ -106,17 +134,21 @@ def inference(model_name, prompt, guidance, steps, n_images=1, width=512, height
       current_model = model
       model_path = current_model.path
 
-  generator = torch.Generator('cuda').manual_seed(seed) if seed != 0 else None
+  # generator = torch.Generator('cuda').manual_seed(seed) if seed != 0 else None
+  if seed == 0:
+    seed = random.randint(0, 2147483647)
+
+  generator = torch.Generator('cuda').manual_seed(seed)
 
   try:
     if img is not None:
-      return img_to_img(model_path, prompt, n_images, neg_prompt, img, strength, guidance, steps, width, height, generator), None
+      return img_to_img(model_path, prompt, n_images, neg_prompt, img, strength, guidance, steps, width, height, generator, seed), f"Done. Seed: {seed}"
     else:
-      return txt_to_img(model_path, prompt, n_images, neg_prompt, guidance, steps, width, height, generator), None
+      return txt_to_img(model_path, prompt, n_images, neg_prompt, guidance, steps, width, height, generator, seed), f"Done. Seed: {seed}"
   except Exception as e:
     return None, error_str(e)
 
-def txt_to_img(model_path, prompt, n_images, neg_prompt, guidance, steps, width, height, generator):
+def txt_to_img(model_path, prompt, n_images, neg_prompt, guidance, steps, width, height, generator, seed):
 
     print(f"{datetime.datetime.now()} txt_to_img, model: {current_model.name}")
 
@@ -125,6 +157,8 @@ def txt_to_img(model_path, prompt, n_images, neg_prompt, guidance, steps, width,
     global current_model_path
     if model_path != current_model_path or last_mode != "txt2img":
         current_model_path = model_path
+
+        update_state(f"Loading {current_model.name} text-to-image model...")
 
         if is_colab or current_model == custom_model:
           pipe = StableDiffusionPipeline.from_pretrained(
@@ -144,6 +178,7 @@ def txt_to_img(model_path, prompt, n_images, neg_prompt, guidance, steps, width,
 
         if torch.cuda.is_available():
           pipe = pipe.to("cuda")
+          pipe.enable_xformers_memory_efficient_attention()
         last_mode = "txt2img"
 
     prompt = current_model.prefix + prompt  
@@ -155,11 +190,14 @@ def txt_to_img(model_path, prompt, n_images, neg_prompt, guidance, steps, width,
       guidance_scale = guidance,
       width = width,
       height = height,
-      generator = generator)
+      generator = generator,
+      callback=pipe_callback)
+
+    # update_state(f"Done. Seed: {seed}")
     
     return replace_nsfw_images(result)
 
-def img_to_img(model_path, prompt, n_images, neg_prompt, img, strength, guidance, steps, width, height, generator):
+def img_to_img(model_path, prompt, n_images, neg_prompt, img, strength, guidance, steps, width, height, generator, seed):
 
     print(f"{datetime.datetime.now()} img_to_img, model: {model_path}")
 
@@ -168,6 +206,8 @@ def img_to_img(model_path, prompt, n_images, neg_prompt, img, strength, guidance
     global current_model_path
     if model_path != current_model_path or last_mode != "img2img":
         current_model_path = model_path
+
+        update_state(f"Loading {current_model.name} image-to-image model...")
 
         if is_colab or current_model == custom_model:
           pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
@@ -187,6 +227,7 @@ def img_to_img(model_path, prompt, n_images, neg_prompt, img, strength, guidance
         
         if torch.cuda.is_available():
           pipe = pipe.to("cuda")
+          pipe.enable_xformers_memory_efficient_attention()
         last_mode = "img2img"
 
     prompt = current_model.prefix + prompt
@@ -196,14 +237,17 @@ def img_to_img(model_path, prompt, n_images, neg_prompt, img, strength, guidance
         prompt,
         negative_prompt = neg_prompt,
         num_images_per_prompt=n_images,
-        init_image = img,
+        image = img,
         num_inference_steps = int(steps),
         strength = strength,
         guidance_scale = guidance,
         # width = width,
         # height = height,
-        generator = generator)
-        
+        generator = generator,
+        callback=pipe_callback)
+
+    # update_state(f"Done. Seed: {seed}")
+
     return replace_nsfw_images(result)
 
 def replace_nsfw_images(results):
@@ -216,9 +260,9 @@ def replace_nsfw_images(results):
         results.images[i] = Image.open("nsfw.png")
     return results.images
 
-css = """.finetuned-diffusion-div div{display:inline-flex;align-items:center;gap:.8rem;font-size:1.75rem}.finetuned-diffusion-div div h1{font-weight:900;margin-bottom:7px}.finetuned-diffusion-div p{margin-bottom:10px;font-size:94%}a{text-decoration:underline}.tabs{margin-top:0;margin-bottom:0}#gallery{min-height:20rem}
-"""
-with gr.Blocks(css=css) as demo:
+# css = """.finetuned-diffusion-div div{display:inline-flex;align-items:center;gap:.8rem;font-size:1.75rem}.finetuned-diffusion-div div h1{font-weight:900;margin-bottom:7px}.finetuned-diffusion-div p{margin-bottom:10px;font-size:94%}a{text-decoration:underline}.tabs{margin-top:0;margin-bottom:0}#gallery{min-height:20rem}
+# """
+with gr.Blocks(css="style.css") as demo:
     gr.HTML(
         f"""
             <div class="finetuned-diffusion-div">
@@ -254,6 +298,7 @@ with gr.Blocks(css=css) as demo:
               # image_out = gr.Image(height=512)
               gallery = gr.Gallery(label="Generated images", show_label=False, elem_id="gallery").style(grid=[2], height="auto")
 
+          state_info = gr.Textbox(label="State", show_label=False, max_lines=2).style(container=False)
           error_output = gr.Markdown()
 
         with gr.Column(scale=45):
@@ -279,9 +324,10 @@ with gr.Blocks(css=css) as demo:
                 strength = gr.Slider(label="Transformation strength", minimum=0, maximum=1, step=0.01, value=0.5)
 
     if is_colab:
-      model_name.change(on_model_change, inputs=model_name, outputs=[custom_model_group, prompt], queue=False)
-      custom_model_path.change(custom_model_changed, inputs=custom_model_path, outputs=None)
+        model_name.change(on_model_change, inputs=model_name, outputs=[custom_model_group, prompt], queue=False)
+        custom_model_path.change(custom_model_changed, inputs=custom_model_path, outputs=None)
     # n_images.change(lambda n: gr.Gallery().style(grid=[2 if n > 1 else 1], height="auto"), inputs=n_images, outputs=gallery)
+    steps.change(on_steps_change, inputs=[steps], outputs=[], queue=False)
 
     inputs = [model_name, prompt, guidance, steps, n_images, width, height, seed, image, strength, neg_prompt]
     outputs = [gallery, error_output]
@@ -309,8 +355,10 @@ with gr.Blocks(css=css) as demo:
     </div>
     """)
 
+    demo.load(update_state_info, inputs=state_info, outputs=state_info, every=0.5, show_progress=False)
+
 print(f"Space built in {time.time() - start_time:.2f} seconds")
 
-if not is_colab:
-  demo.queue(concurrency_count=1)
+# if not is_colab:
+demo.queue(concurrency_count=1)
 demo.launch(debug=is_colab, share=is_colab)
